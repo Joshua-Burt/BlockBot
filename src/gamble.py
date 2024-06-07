@@ -66,16 +66,16 @@ async def gamble(ctx, wager):
     # Triple the wager
     if value <= 0.05:
         await add_points(author.id, wager * 2)
-        result = f"**{author.display_name}** has gambled **{wager:,}** and tripled their wager."
+        result = f"**{author}** has gambled **{wager:,}** and tripled their wager."
 
     # Break even
     elif 0.05 < value <= 0.15:
-        result = f"**{author.display_name}** has gambled **{wager:,}** and broke even."
+        result = f"**{author}** has gambled **{wager:,}** and broke even."
 
     # Doubled the wager
     elif 0.15 < value <= 0.30:
         await add_points(author.id, wager)
-        result = f"**{author.display_name}** has gambled **{wager:,}** and doubled their wager."
+        result = f"**{author}** has gambled **{wager:,}** and doubled their wager."
 
     # Lose some percentage of the wager
     elif 0.30 < value <= 0.45:
@@ -85,7 +85,7 @@ async def gamble(ctx, wager):
         await add_points(author.id, -amount)
         await add_to_jackpot(amount)
 
-        result = f"**{author.display_name}** has gambled **{wager:,}** and got {multiple:.2f}x back."
+        result = f"**{author}** has gambled **{wager:,}** and got {multiple:.2f}x back."
         jackpot_changed = True
 
     # Lose half of the wager
@@ -95,7 +95,7 @@ async def gamble(ctx, wager):
         await add_points(author.id, -amount)
         await add_to_jackpot(amount)
 
-        result = f"**{author.display_name}** has gambled **{wager:,}** and lost half of it."
+        result = f"**{author}** has gambled **{wager:,}** and lost half of it."
         jackpot_changed = True
 
     # Gain some percentage of the wager
@@ -104,14 +104,14 @@ async def gamble(ctx, wager):
         amount = round((wager * multiple) - wager)
 
         await add_points(author.id, amount)
-        result = f"**{author.display_name}** has gambled **{wager:,}** and gained {multiple:.2f}x back."
+        result = f"**{author}** has gambled **{wager:,}** and gained {multiple:.2f}x back."
 
     # Lose the entire wager
     elif 0.85 < value <= 0.90:
         await add_points(author.id, -wager)
         await add_to_jackpot(wager)
 
-        result = f"**{author.display_name}** has gambled **{wager:,}** and lost all of it."
+        result = f"**{author}** has gambled **{wager:,}** and lost all of it."
         jackpot_changed = True
 
     # Give the wager to a random user
@@ -121,9 +121,9 @@ async def gamble(ctx, wager):
         await add_points(author.id, -wager)
         await add_points(gifted_member_id, wager)
 
-        gifted_member_name = await get_user_from_id(gifted_member_id).display_name
+        gifted_member_name = await get_user_from_id(gifted_member_id)
 
-        result = f"**{author.display_name}** has gambled **{wager:,}** and has given it to **{gifted_member_name}**."
+        result = f"**{author}** has gambled **{wager:,}** and has given it to **{gifted_member_name}**."
 
     # Won the jackpot!
     else:
@@ -141,7 +141,7 @@ async def gamble(ctx, wager):
         gifted_member_points = await get_user_field(gifted_member_id, "points")
 
         await ctx.respond(' '.join((result,
-                                    f"\n**{author.display_name}'s** current balance is **{author_curr_points:,}**."
+                                    f"\n**{author}'s** current balance is **{author_curr_points:,}**."
                                     f"\n**{gifted_member_name}'s** current balance is **{gifted_member_points:,}**.")))
     # General Output
     else:

@@ -212,6 +212,7 @@ async def play_sound(sound_dict):
 
         if sound_dict["path"] == "../sounds/slam.mp3":
             await dramatic_exit_kick(sound_dict["member"])
+            await asyncio.sleep(2)
         else:
             await asyncio.sleep(audio_length + 2)
 
