@@ -12,6 +12,7 @@ import intro
 import json_utils
 import server
 import sounds
+import wordle
 from log import log, log_error
 from bot import bot
 
@@ -48,6 +49,7 @@ async def init_components(config):
 
     await intro.init(config["max_intro_length"])
     await gamble.init(config["gamble_channel"])
+    await wordle.init(config["wordle_channel"])
     await server.init(config["server_path"])
     await sounds.init()
 

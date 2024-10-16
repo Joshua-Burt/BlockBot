@@ -2,6 +2,7 @@
     "token": "",
     "server_path": "",
     "gamble_channel": -1,
+    "wordle_channel": -1,
     "max_intro_length": 8,
     "default_activity": "Not Minecraft"
 }

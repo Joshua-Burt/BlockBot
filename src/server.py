@@ -15,6 +15,10 @@ async def init(minecraft_server_path):
 
 @bot.slash_command(name="start", description="Start the Minecraft Server")
 async def start_server(ctx):
+    if server_path == "":
+        await ctx.respond("There is no server currently configured.")
+        return
+
     await log("Starting server...")
     await start(ctx, server_path)
 
@@ -24,6 +28,10 @@ async def start_server(ctx):
 
 @bot.slash_command(name="stop", description="Stop the Minecraft Server")
 async def stop_server(ctx):
+    if server_path == "":
+        await ctx.respond("There is no server currently configured.")
+        return
+
     await log("Stopped the server")
     await stop(ctx)
 
@@ -33,6 +41,10 @@ async def stop_server(ctx):
 
 @bot.slash_command(name="command", description="Send a Minecraft server command")
 async def server_command(ctx, command):
+    if server_path == "":
+        await ctx.respond("There is no server currently configured.")
+        return
+
     global process
     if process is None:
         await ctx.respond("The server is not running", ephemeral=True)

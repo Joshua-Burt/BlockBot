@@ -5,6 +5,7 @@ import initialize
 # Local Files
 import json_utils
 import gamble
+import wordle
 
 from log import log, log_error
 from bot import bot
@@ -19,6 +20,9 @@ async def on_ready():
     await initialize.init_all()
 
     await start_points_loop()
+
+    if not wordle.wordle_loop.is_running():
+        wordle.wordle_loop.start()
 
 
 @bot.event
