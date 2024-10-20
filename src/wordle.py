@@ -1,7 +1,5 @@
 import datetime
 
-import discord
-from discord import option
 from discord.ext import tasks
 
 from bot import bot
@@ -17,7 +15,7 @@ async def get_quickest(puzzles):
     puzzle_results = []
     for puzzle in puzzles:
         guesses = await get_number_of_guesses(puzzle.get("puzzle"))
-        puzzle_results.append({'guesses': guesses,'user': puzzle.get("user").name})
+        puzzle_results.append({'guesses': guesses,'user': puzzle.get("user").global_name})
 
     # Find the fastest guess(es)
     guesses = [result["guesses"] for result in puzzle_results]
@@ -30,7 +28,7 @@ async def get_most_volatile(puzzles):
     volatility_indices = []
     for puzzle in puzzles:
         volatility = await get_volatile_index(puzzle.get("puzzle"))
-        volatility_indices.append({'volatility': volatility ,'user': puzzle.get("user").name})
+        volatility_indices.append({'volatility': volatility ,'user': puzzle.get("user").global_name})
 
     # Find the most volatile
     vol = [result["volatility"] for result in volatility_indices]
@@ -46,11 +44,11 @@ async def get_most_helped(puzzles):
     help_indices = []
     for puzzle in puzzles:
         help_index = await get_help_index(puzzle.get("puzzle"))
-        help_indices.append({'help': help_index , 'user': puzzle.get("user").name})
+        help_indices.append({'help': help_index , 'user': puzzle.get("user").global_name})
 
     # Find the most volatile
     hel = [result["help"] for result in help_indices]
-    hel.sort()
+    hel.sort(reverse=True)
     most_help = hel[0]
 
     if most_help == 0:
@@ -122,8 +120,8 @@ async def get_puzzle_number(puzzle):
     return puzzle[x.start():x.end()]
 
 
-async def get_todays_puzzle_number():
-    # First puzzle was June 20, 2021, subtracts 1 day to account for off-by-one difference
+async def get_yesterdays_puzzle_number():
+    # First puzzle was June 20, 2021
     first_day = datetime.date(2021, 6,20)
     today_day = datetime.date.today()
 
@@ -131,10 +129,10 @@ async def get_todays_puzzle_number():
 
 
 async def is_from_yesterday(puzzle):
-    today = await get_todays_puzzle_number()
+    yesterday = await get_yesterdays_puzzle_number()
     contender = (await get_puzzle_number(puzzle)).replace(',',"")
 
-    return today == contender
+    return yesterday == contender
 
 async def is_valid_puzzle(contender):
     square_count = await count_green(contender) + await count_yellow(contender) + await count_blank(contender)
@@ -146,7 +144,7 @@ async def is_valid_puzzle(contender):
 
 
 async def generate_message(speed_dicts, volatility_dicts, help_dicts):
-    message = "**Results of Yesterday's Wordle:**"
+    message = f"**Results of Yesterday's Wordle ({int(await get_yesterdays_puzzle_number()):,d}):**"
 
     if speed_dicts is not None:
         for i in range(len(speed_dicts)):
@@ -162,7 +160,8 @@ async def generate_message(speed_dicts, volatility_dicts, help_dicts):
 
     return message
 
-@tasks.loop(time=datetime.time(8,0,0), reconnect=True)
+# TODO: Convert local time to UTC
+@tasks.loop(time=datetime.time(10,30,0), reconnect=True)
 async def wordle_loop():
     await bot.wait_until_ready()
 
