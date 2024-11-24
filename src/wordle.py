@@ -2,7 +2,6 @@ import calendar
 import datetime
 from collections import Counter, defaultdict
 
-from Tools.i18n.msgfmt import generate
 from discord.ext import tasks
 
 from bot import bot
