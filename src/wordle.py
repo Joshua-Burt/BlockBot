@@ -1,5 +1,8 @@
+import calendar
 import datetime
+from collections import Counter, defaultdict
 
+from Tools.i18n.msgfmt import generate
 from discord.ext import tasks
 
 from bot import bot
@@ -15,7 +18,7 @@ async def get_quickest(puzzles):
     puzzle_results = []
     for puzzle in puzzles:
         guesses = await get_number_of_guesses(puzzle.get("puzzle"))
-        puzzle_results.append({'guesses': guesses,'user': puzzle.get("user").global_name})
+        puzzle_results.append({'guesses': guesses,'user': puzzle.get("user").name})
 
     # Find the fastest guess(es)
     guesses = [result["guesses"] for result in puzzle_results]
@@ -28,7 +31,7 @@ async def get_most_volatile(puzzles):
     volatility_indices = []
     for puzzle in puzzles:
         volatility = await get_volatile_index(puzzle.get("puzzle"))
-        volatility_indices.append({'volatility': volatility ,'user': puzzle.get("user").global_name})
+        volatility_indices.append({'volatility': volatility ,'user': puzzle.get("user").name})
 
     # Find the most volatile
     vol = [result["volatility"] for result in volatility_indices]
@@ -44,7 +47,7 @@ async def get_most_helped(puzzles):
     help_indices = []
     for puzzle in puzzles:
         help_index = await get_help_index(puzzle.get("puzzle"))
-        help_indices.append({'help': help_index , 'user': puzzle.get("user").global_name})
+        help_indices.append({'help': help_index , 'user': puzzle.get("user").name})
 
     # Find the most volatile
     hel = [result["help"] for result in help_indices]
@@ -74,14 +77,14 @@ async def get_volatile_index(puzzle):
     return max(outliers)
 
 async def get_help_index(puzzle):
-    if await get_number_of_guesses(puzzle) == "?":
+    if await get_number_of_guesses(puzzle) == "X":
         return -1
 
     return await count_yellow(puzzle)
 
 
 async def get_number_of_guesses(puzzle):
-    x = re.search("([1-6]|[?])/6", puzzle)
+    x = re.search("([1-6]|[X])/6", puzzle)
     if x is None:
         return -1
 
@@ -143,7 +146,7 @@ async def is_valid_puzzle(contender):
     return square_count > 0 and square_modulo == 0 and total_guesses != -1 and is_yesterday
 
 
-async def generate_message(speed_dicts, volatility_dicts, help_dicts):
+async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts):
     message = f"**Results of Yesterday's Wordle ({int(await get_yesterdays_puzzle_number()):,d}):**"
 
     if speed_dicts is not None:
@@ -160,14 +163,73 @@ async def generate_message(speed_dicts, volatility_dicts, help_dicts):
 
     return message
 
+
+async def generate_monthly_message(stats):
+    message = "**Monthly Wordle Recap:**"
+
+    for key, value in stats.items():
+        message += f"\n\n**{key.title().replace('_', ' ')}**"
+        for sub_key, sub_value in value.items():
+            message += f"\n> {sub_key}: {sub_value}"
+
+    return message
+
+
+async def collect_stats(results):
+    fastest_names = re.findall("(?:(?<=Fastest \d/\d: )|(?<=Fastest: ))[a-z0-9_.]+", results)
+    most_help_names = re.findall("(?:(?<=Required Most Help \d/\d: )|(?<=Required Most Help: ))[a-z0-9_.]+", results)
+    most_volatile_names = re.findall("(?:(?<=Most Volatile \d/\d: )|(?<=Most Volatile: ))[a-z0-9_.]+", results)
+
+    return {'fastest_names': fastest_names, 'most_help_names': most_help_names, 'most_volatile_names': most_volatile_names}
+
+
+async def count_stats(stats):
+    fastest_count = dict(zip(Counter(stats['fastest_names']).keys(), Counter(stats['fastest_names']).values()))
+    help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['fastest_names']).values()))
+    volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['fastest_names']).values()))
+
+    return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count}
+
+@bot.slash_command(name="month", description="AAAAAAAAAAAAAAAAAAAAA")
+async def summarize_month(ctx):
+    yesterdays_date = datetime.datetime.now() - datetime.timedelta(days=1)
+    num_days_last_month = calendar.monthrange(yesterdays_date.year, yesterdays_date.month)[1]
+
+    # Get all the messages from the Wordle channel in the past month
+    channel = bot.get_channel(wordle_channel_id)
+    messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=num_days_last_month)).flatten()
+
+    # Has the form {'fastest_count': {'user1': ##, 'user2': ##}, 'help_count': {...}, 'volatile_count': {...}}
+    user_stats = defaultdict(lambda: defaultdict(int))
+
+    for message in messages:
+        if message.author == bot.user and "Results of Yesterday's Wordle" in message.content:
+            users = await collect_stats(message.content)
+            # Count how many "fastest", "most help", etc. stats each user has on this message
+            counted_stats = await count_stats(users)
+
+            # Add the current message's stats to the totals
+            for d in counted_stats.items():
+                key, value = d
+                for sub_key, sub_value in value.items():
+                    user_stats[key][sub_key] += sub_value
+
+    # Convert back to regular dict
+    user_stats = {key: dict(sub_dict) for key, sub_dict in user_stats.items()}
+
+    await channel.send(await generate_monthly_message(user_stats))
+
+    return user_stats
+
+
 # TODO: Convert local time to UTC
 @tasks.loop(time=datetime.time(10,30,0), reconnect=True)
 async def wordle_loop():
     await bot.wait_until_ready()
 
-    # Get all the messages from the Wordle channel in the past day
+    # Get all the messages from the Wordle channel in the past two days
     channel = bot.get_channel(wordle_channel_id)
-    messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=1)).flatten()
+    messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=2)).flatten()
 
     puzzles = []
 
@@ -183,5 +245,10 @@ async def wordle_loop():
     most_volatile = await get_most_volatile(puzzles)
     most_help = await get_most_helped(puzzles)
 
-    output = await generate_message(fastest_solve, most_volatile, most_help)
+    output = await generate_daily_message(fastest_solve, most_volatile, most_help)
     await channel.send(output)
+
+    if datetime.date.today().day == 1:
+        user_stats = await summarize_month()
+        monthly_output = await generate_monthly_message(user_stats)
+        await channel.send(monthly_output)
