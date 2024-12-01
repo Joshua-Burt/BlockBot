@@ -189,14 +189,14 @@ async def count_stats(stats):
 
     return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count}
 
-@bot.slash_command(name="month", description="AAAAAAAAAAAAAAAAAAAAA")
-async def summarize_month(ctx):
+
+async def summarize_month():
     yesterdays_date = datetime.datetime.now() - datetime.timedelta(days=1)
     num_days_last_month = calendar.monthrange(yesterdays_date.year, yesterdays_date.month)[1]
 
     # Get all the messages from the Wordle channel in the past month
     channel = bot.get_channel(wordle_channel_id)
-    messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=num_days_last_month)).flatten()
+    messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=num_days_last_month + 1)).flatten()
 
     # Has the form {'fastest_count': {'user1': ##, 'user2': ##}, 'help_count': {...}, 'volatile_count': {...}}
     user_stats = defaultdict(lambda: defaultdict(int))
