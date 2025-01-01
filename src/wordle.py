@@ -216,8 +216,6 @@ async def summarize_month():
     # Convert back to regular dict
     user_stats = {key: dict(sub_dict) for key, sub_dict in user_stats.items()}
 
-    await channel.send(await generate_monthly_message(user_stats))
-
     return user_stats
 
 
