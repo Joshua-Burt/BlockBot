@@ -40,15 +40,14 @@ async def create_file_structure():
 
 @bot.slash_command(name="shop", description="Display the sounds shop")
 async def shop(ctx: discord.ApplicationContext):
-    messages = [""]
-    messages[0] = "Use **/play *[Sound Name]*** to play the sound\n"
+    messages = ["Use **/play *[Sound Name]*** to play the sound\n"]
     max_message_length = 2000
     message_count = 0
 
     for sound_name in sound_dict:
         if len(messages[message_count]) >= max_message_length - 100:
             message_count = message_count + 1
-            messages.insert(message_count, "")
+            messages.insert(message_count, "**Shop Continued:**\n")
         
         sound_price = sound_dict[sound_name]['price']
         messages[message_count] += f"> Name: **{sound_name}** | Price: **{sound_price:,}**\n"
