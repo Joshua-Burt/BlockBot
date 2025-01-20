@@ -6,17 +6,30 @@ from log import log
 
 process = None
 server_path = ""
+default_activity = ""
+error_messages = {"1": "There is no server currently configured.",
+                  "2": "The server file defined in config.json does not exit."}
 
 
-async def init(minecraft_server_path):
-    global server_path
+async def init(minecraft_server_path, bot_default_activity):
+    global server_path, default_activity
+    
     server_path = minecraft_server_path
+    default_activity = bot_default_activity
+
+
+async def verify_server_path():
+    if server_path == "":
+        return 1
+    elif not os.path.exists(server_path):
+        return 2
 
 
 @bot.slash_command(name="start", description="Start the Minecraft Server")
 async def start_server(ctx):
-    if server_path == "":
-        await ctx.respond("There is no server currently configured.")
+    verify_server_path_rc = await verify_server_path()
+    if verify_server_path_rc != 0:
+        await ctx.respond(error_messages.get(str(verify_server_path_rc)), ephemeral=True)
         return
 
     await log("Starting server...")
@@ -28,21 +41,23 @@ async def start_server(ctx):
 
 @bot.slash_command(name="stop", description="Stop the Minecraft Server")
 async def stop_server(ctx):
-    if server_path == "":
-        await ctx.respond("There is no server currently configured.")
+    verify_server_path_rc = await verify_server_path()
+    if verify_server_path_rc != 0:
+        await ctx.respond(error_messages.get(str(verify_server_path_rc)), ephemeral=True)
         return
 
     await log("Stopped the server")
     await stop(ctx)
 
-    game = discord.Game("your mom")
+    game = discord.Game(default_activity)
     await bot.change_presence(status=discord.Status.online, activity=game)
 
 
 @bot.slash_command(name="command", description="Send a Minecraft server command")
 async def server_command(ctx, command):
-    if server_path == "":
-        await ctx.respond("There is no server currently configured.")
+    verify_server_path_rc = await verify_server_path()
+    if verify_server_path_rc != 0:
+        await ctx.respond(error_messages.get(str(verify_server_path_rc)), ephemeral=True)
         return
 
     global process
