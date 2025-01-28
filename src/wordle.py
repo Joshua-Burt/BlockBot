@@ -76,9 +76,6 @@ async def get_volatile_index(puzzle):
     return max(outliers)
 
 async def get_help_index(puzzle):
-    if await get_number_of_guesses(puzzle) == "X":
-        return -1
-
     return await count_yellow(puzzle)
 
 
@@ -153,12 +150,12 @@ async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts):
             message += f"\n> Fastest{' ' + str(i+1)+'/'+str(len(speed_dicts)) if len(speed_dicts) > 1 else ''}: {speed_dicts[i]['user']} with {speed_dicts[i]['guesses']} guesses"
 
     if volatility_dicts is not None:
-        for volatility_dict in volatility_dicts:
-            message += f"\n> Most Volatile: {volatility_dict['user']}"
+        for i in range(len(volatility_dicts)):
+            message += f"\n> Most Volatile{' ' + str(i + 1) + '/' + str(len(volatility_dicts)) if len(volatility_dicts) > 1 else ''}: {volatility_dicts[i]['user']}"
 
     if help_dicts is not None:
-        for help_dict in help_dicts:
-            message += f"\n> Required Most Help: {help_dict['user']} with {help_dict['help']} 🟨"
+        for i in range(len(help_dicts)):
+            message += f"\n> Required Most Help{' ' + str(i + 1) + '/' + str(len(help_dicts)) if len(help_dicts) > 1 else ''}: {help_dicts[i]['user']} with {help_dicts[i]['help']} 🟨"
 
     return message
 

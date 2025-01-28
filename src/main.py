@@ -91,7 +91,7 @@ async def pay(ctx: discord.ApplicationContext, payee: str, amount: int):
             await gamble.pay_points(ctx.author.id, payee_id, amount)
 
             await ctx.respond("**{}** paid **{}** - **{:,}** points".format(
-                await json_utils.get_user_from_id(ctx.author.id),
+                await json_utils.get_user_from_id(str(ctx.author.id)),
                 payee_member, amount))
     else:
         await ctx.respond("You must provide a valid @username and payment amount")
