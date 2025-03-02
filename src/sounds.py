@@ -188,10 +188,11 @@ async def test_intro(ctx: discord.ApplicationContext, username):
                               ephemeral=True)
         else:
             filename = await get_user_field(user.id, 'file_name')
+            file_path = Path("../sounds/intros/" + filename)
             
-            if filename is not None:
+            if file_path.exists():
                 await ctx.respond(f"Playing {user.display_name}'s intro", ephemeral=True)
-                await add_to_queue(ctx.author, "../sounds/intros/" + filename)
+                await add_to_queue(ctx.author, file_path.absolute())
             else:
                 await ctx.respond(f"Cannot find {user.display_name}'s intro", ephemeral=True)
 
