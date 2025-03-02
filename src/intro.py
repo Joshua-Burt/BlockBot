@@ -90,7 +90,7 @@ async def on_voice_state_update(member: discord.Member, before, after):
         return
 
     if not before.channel and after.channel:
-        filename = await get_user_field(user.id, 'file_name')
+        filename = await json_utils.get_user_field(user.id, 'file_name')
         file_path = Path("../sounds/intros/" + filename)
         
         if file_path.exists():
