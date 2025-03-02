@@ -85,7 +85,7 @@ async def pay(ctx: discord.ApplicationContext, payee: str, amount: int):
             payee_member = await json_utils.get_user_from_id(payee_id)
 
             if payee_member is None or await json_utils.get_user_field(payee_id, "points") is None:
-                await ctx.respond(f"User '{payee}' does not exist in the system")
+                await ctx.respond(f"User '{payee}' does not exist in the system", ephemeral=True)
                 return
 
             await gamble.pay_points(ctx.author.id, payee_id, amount)
@@ -94,7 +94,7 @@ async def pay(ctx: discord.ApplicationContext, payee: str, amount: int):
                 await json_utils.get_user_from_id(str(ctx.author.id)),
                 payee_member, amount))
     else:
-        await ctx.respond("You must provide a valid @username and payment amount")
+        await ctx.respond("You must provide a valid @username and payment amount", ephemeral=True)
 
 
 @bot.slash_command(name="nick", description="Change the nickname of a user")
