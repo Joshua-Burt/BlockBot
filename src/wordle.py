@@ -216,7 +216,6 @@ async def summarize_month():
     return user_stats
 
 
-# TODO: Convert local time to UTC
 @tasks.loop(time=datetime.time(10,30,0), reconnect=True)
 async def wordle_loop():
     await bot.wait_until_ready()

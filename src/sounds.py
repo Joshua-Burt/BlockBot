@@ -172,6 +172,31 @@ async def dramatic_exit_kick(author):
     await author.move_to(None)
 
 
+@bot.slash_command(name="test_intro", description="Upload an .mp3 file to change someone else's intro")
+async def test_intro(ctx: discord.ApplicationContext, username):
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.respond("You must have the administrator permission to play other members' intros", ephemeral=True)
+        return
+
+    if len(username) > 0:
+        try:
+            user = await ctx.guild.fetch_member(username.strip("<@!>"))
+
+        # Intercepts an exception when a user does not provide a snowflake.
+        except discord.errors.HTTPException:
+            await ctx.respond("Please include the '@' at the start of the name of the user's name",
+                              ephemeral=True)
+        else:
+            filename = await get_user_field(user.id, 'file_name')
+            
+            if filename is not None:
+                await log(f"Playing {Fore.YELLOW + user.display_name + Fore.RESET}'s intro in {Fore.YELLOW + ctx.author.voice.channel.name + Fore.RESET}")
+                await add_to_queue(ctx.author, "../sounds/intros/" + filename)
+                await ctx.respond(f"Playing {user.display_name}'s intro", ephemeral=True)
+            else:
+                await ctx.respond(f"Cannot find {user.display_name}'s intro", ephemeral=True)
+
+
 async def play_queue():
     global is_playing
     is_playing = True

@@ -11,7 +11,6 @@ global jackpot_json
 global id_list
 gambling_channel_id = -1
 
-
 async def init(gamble_channel):
     global gambling_channel_id
     gambling_channel_id = gamble_channel
@@ -33,7 +32,7 @@ async def bet(ctx, wager):
         author_id = ctx.author.id
         await update_user(author_id, "bets", await get_user_field(author_id, "bets") + 1)
     else:
-        await ctx.respond("This isn't the gambling channel dummy")
+        await ctx.respond("This isn't the gambling channel dummy", ephemeral=True)
 
 
 async def gamble(ctx, wager):
@@ -217,20 +216,18 @@ async def get_jackpot_amount():
 async def points_loop(voice_channel_ids, afk_channel_ids):
     await bot.wait_until_ready()
 
-    if len(voice_channel_ids) > 0:
-        for channel_id in voice_channel_ids:
-            channel = bot.get_channel(channel_id)
-            members = channel.members
+    for channel_id in voice_channel_ids:
+        channel = bot.get_channel(channel_id)
+        members = channel.members
 
-            for member in members:
-                if not member.bot and str(member.id) in id_list:
-                    await update_user(member.id, "points", await get_user_field(member.id, "points") + 100)
+        for member in members:
+            if not member.bot and str(member.id) in id_list:
+                await update_user(member.id, "points", await get_user_field(member.id, "points") + 100)
 
-    if len(afk_channel_ids) > 0:
-        for channel_id in afk_channel_ids:
-            afk_channel = bot.get_channel(channel_id)
-            afk_members = afk_channel.members
+    for channel_id in afk_channel_ids:
+        afk_channel = bot.get_channel(channel_id)
+        afk_members = afk_channel.members
 
-            for afk_member in afk_members:
-                if not afk_member.bot and str(afk_member.id) in id_list:
-                    await update_user(afk_member.id, "points", await get_user_field(afk_member.id, "points") - 100)
+        for afk_member in afk_members:
+            if not afk_member.bot and str(afk_member.id) in id_list:
+                await update_user(afk_member.id, "points", await get_user_field(afk_member.id, "points") - 100)

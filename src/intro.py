@@ -26,7 +26,7 @@ async def intro(ctx):
     await ctx.respond("Your intro is now " + ("ON" if new_play_on_enter else "OFF"), ephemeral=True)
 
 
-@bot.slash_command(name="upload_other", description="Upload an .mp3 file to change someone else's intro", )
+@bot.slash_command(name="upload_other", description="Upload an .mp3 file to change someone else's intro")
 @option(
     "attachment",
     discord.Attachment,
@@ -50,7 +50,7 @@ async def upload_others_intro(ctx: discord.ApplicationContext, attachment: disco
             await change_intro(ctx, attachment, user)
 
 
-@bot.slash_command(name="upload", description="Upload an .mp3 file to change your intro", )
+@bot.slash_command(name="upload", description="Upload an .mp3 file to change your intro")
 @option(
     "attachment",
     discord.Attachment,
