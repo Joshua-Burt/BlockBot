@@ -91,10 +91,6 @@ async def get_number_of_guesses(puzzle):
     return puzzle[x.start():x.start()+1]
 
 
-async def count_lines(puzzle) -> int:
-    return len(get_lines(puzzle))
-
-
 async def get_lines(puzzle) -> list or None:
     x = re.search("([🟩🟨⬛⬜]+\n*)+", puzzle)
     if x is None:
@@ -110,6 +106,9 @@ async def get_line(puzzle, line_number) -> list or None:
     
     return lines[line_number]
 
+
+async def count_lines(puzzle) -> int:
+    return len(await get_lines(puzzle))
 
 # Square Counters
 async def count_green(line) -> int:
