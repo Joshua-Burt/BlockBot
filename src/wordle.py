@@ -62,6 +62,10 @@ async def get_most_helped(puzzles):
 # Returns [0] if there is no extreme outliers (changes of <= -2 or >= 4)
 async def get_volatile_index(puzzle):
     lines = await get_lines(puzzle)
+    
+    if lines is None:
+        return [0]
+    
     outliers = [0]
     for i in range(len(lines) - 1):
         line_1 = lines[i]
@@ -87,7 +91,11 @@ async def get_number_of_guesses(puzzle):
     return puzzle[x.start():x.start()+1]
 
 
-async def get_lines(puzzle):
+async def count_lines(puzzle) -> int:
+    return len(get_lines(puzzle))
+
+
+async def get_lines(puzzle) -> list or None:
     x = re.search("([🟩🟨⬛⬜]+\n*)+", puzzle)
     if x is None:
         return None
@@ -95,18 +103,22 @@ async def get_lines(puzzle):
     return puzzle[x.start():x.end()].splitlines()
 
 
-async def get_line(puzzle, line_number):
-    return get_lines(puzzle)[line_number]
+async def get_line(puzzle, line_number) -> list or None:
+    lines = get_lines(puzzle)
+    if lines is None:
+        return None
+    
+    return lines[line_number]
 
 
 # Square Counters
-async def count_green(line):
+async def count_green(line) -> int:
     return line.count("🟩")
 
-async def count_yellow(line):
+async def count_yellow(line) -> int:
     return line.count("🟨")
 
-async def count_blank(line):
+async def count_blank(line) -> int:
     # Light mode uses white squares, dark mode uses black squares
     return max(line.count("⬛"), line.count("⬜"))
 
@@ -137,9 +149,14 @@ async def is_valid_puzzle(contender):
     square_count = await count_green(contender) + await count_yellow(contender) + await count_blank(contender)
     square_modulo = square_count % 5
     total_guesses = await get_number_of_guesses(contender)
+    line_count = await count_lines(contender)
     is_yesterday = await is_from_yesterday(contender)
 
-    return square_count > 0 and square_modulo == 0 and total_guesses != -1 and is_yesterday
+    return (square_count > 0
+            and square_modulo == 0
+            and total_guesses != -1
+            and line_count == total_guesses
+            and is_yesterday)
 
 
 async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts):
