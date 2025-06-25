@@ -100,15 +100,21 @@ async def get_lines(puzzle) -> list or None:
 
 
 async def get_line(puzzle, line_number) -> list or None:
-    lines = get_lines(puzzle)
+    lines = await get_lines(puzzle)
+    
     if lines is None:
         return None
     
     return lines[line_number]
 
 
-async def count_lines(puzzle) -> int:
-    return len(await get_lines(puzzle))
+async def count_lines(puzzle) -> int or None:
+    lines = await get_lines(puzzle)
+    
+    if lines is None:
+        return None
+    
+    return len(lines)
 
 # Square Counters
 async def count_green(line) -> int:
