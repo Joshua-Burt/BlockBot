@@ -72,7 +72,7 @@ async def start(ctx, minecraft_server_path):
     global process
 
     if process:
-        await ctx.respond("The server is already running", ephemeral=True)
+        await ctx.respond("The server is already running")
     else:
         await ctx.respond("Starting server...")
 
@@ -97,7 +97,7 @@ async def stop(ctx):
         await ctx.respond("Stopped the server")
         process = None
     else:
-        await ctx.respond("The server isn't running", ephemeral=True)
+        await ctx.respond("The server isn't running")
 
 
 async def ping_ip(ip, port):
