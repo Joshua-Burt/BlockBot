@@ -227,15 +227,12 @@ async def play_sound(sound_dict):
         return
 
     # Prevents an error where the bot is sometimes still in a voice channel
-    try:
-        voice = await sound_dict["channel"].connect()
-    except discord.ClientException:
-        for x in bot.voice_clients:
-            if x.guild == sound_dict["member"].guild:
-                await x.disconnect()
-                break
+    for x in bot.voice_clients:
+        if x.guild == sound_dict["member"].guild:
+            await x.disconnect()
+            break
 
-        voice = await sound_dict["channel"].connect()
+    voice = await sound_dict["channel"].connect()
 
     # Stay in this channel as long as the next sound is in the same channel
     while True:

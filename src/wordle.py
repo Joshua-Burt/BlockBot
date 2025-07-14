@@ -83,12 +83,12 @@ async def get_help_index(puzzle):
     return await count_yellow(puzzle)
 
 
-async def get_number_of_guesses(puzzle):
+async def get_number_of_guesses(puzzle) -> int:
     x = re.search("([1-6]|[X])/6", puzzle)
     if x is None:
         return -1
 
-    return puzzle[x.start():x.start()+1]
+    return int(puzzle[x.start():x.start()+1])
 
 
 async def get_lines(puzzle) -> list or None:
@@ -150,15 +150,15 @@ async def is_from_yesterday(puzzle):
 
     return yesterday == contender
 
+
 async def is_valid_puzzle(contender):
     square_count = await count_green(contender) + await count_yellow(contender) + await count_blank(contender)
-    square_modulo = square_count % 5
     total_guesses = await get_number_of_guesses(contender)
     line_count = await count_lines(contender)
     is_yesterday = await is_from_yesterday(contender)
 
     return (square_count > 0
-            and square_modulo == 0
+            and square_count % 5 == 0
             and total_guesses != -1
             and line_count == total_guesses
             and is_yesterday)

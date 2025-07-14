@@ -25,7 +25,7 @@ async def init(gamble_channel):
 
 
 @bot.slash_command(name="gamble")
-async def bet(ctx, wager):
+async def bet(ctx: discord.ApplicationContext, wager):
     if ctx.channel.id == gambling_channel_id:
         await gamble(ctx, wager)
 
@@ -35,7 +35,7 @@ async def bet(ctx, wager):
         await ctx.respond("This isn't the gambling channel dummy", ephemeral=True)
 
 
-async def gamble(ctx, wager):
+async def gamble(ctx: discord.ApplicationContext, wager):
     if not wager.isnumeric() and wager != "all":
         await ctx.respond("What")
         return

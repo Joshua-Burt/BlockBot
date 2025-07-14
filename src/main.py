@@ -1,3 +1,7 @@
+import asyncio
+import platform
+import signal
+
 import discord
 from colorama import Fore
 
@@ -6,6 +10,7 @@ import initialize
 import json_utils
 import gamble
 import wordle
+import atexit
 
 from log import log, log_error
 from bot import bot
@@ -19,10 +24,31 @@ async def on_ready():
 
     await initialize.init_all()
 
-    await start_points_loop()
+    bot.loop.create_task(start_points_loop())
+    bot.loop.create_task(start_wordle_loop())
 
-    if not wordle.wordle_loop.is_running():
-        wordle.wordle_loop.start()
+    shutdown_event = asyncio.Event()
+
+    def handle_signal(signame):
+        print(f"Received {signame}, shutting down...")
+        shutdown_event.set()
+
+    loop = asyncio.get_running_loop()
+
+    if platform.system() == "Windows":
+        # Use signal.signal on Windows
+        signal.signal(signal.SIGINT, lambda s, f: handle_signal("SIGINT"))
+        signal.signal(signal.SIGTERM, lambda s, f: handle_signal("SIGTERM"))
+    else:
+        for signame in {"SIGINT", "SIGTERM"}:
+            loop.add_signal_handler(getattr(signal, signame), lambda s=signame: handle_signal(s))
+
+    try:
+        await shutdown_event.wait()
+    finally:
+        await log("Closing bot...")
+        await close_connection()
+        await loop.shutdown_asyncgens()
 
 
 @bot.event
@@ -143,6 +169,20 @@ async def on_message(message: discord.Message):
 
 # Helper functions
 
+async def start_wordle_loop():
+    if not wordle.wordle_loop.is_running():
+        wordle.wordle_loop.start()
+
+async def stop_wordle_loop():
+    if wordle.wordle_loop.is_running():
+        wordle.wordle_loop.stop()
+
+
+async def stop_points_loop():
+    if gamble.points_loop.is_running():
+        gamble.points_loop.stop()
+
+
 async def start_points_loop():
     guilds = bot.guilds
     voice_channels = []
@@ -207,6 +247,14 @@ class Error(Exception):
     def __init__(self, message):
         super().__init__(Fore.RED + message)
 
+async def close_connection():
+    await log("Attempting to close connections...")
+    await stop_points_loop()
+    await stop_wordle_loop()
+    await bot.close()
+    await log("Connections closed successfully.")
+
+
 
 def main():
     config = initialize.get_config()
@@ -214,4 +262,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt caught in __main__.")
