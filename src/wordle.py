@@ -1,11 +1,10 @@
 import calendar
 import datetime
+import re
 from collections import Counter, defaultdict
-
 from discord.ext import tasks
 
 from bot import bot
-import re
 
 wordle_channel_id = -1
 
@@ -83,16 +82,17 @@ async def get_help_index(puzzle):
     return await count_yellow(puzzle)
 
 
-async def get_number_of_guesses(puzzle):
-    x = re.search("([1-6]|[X])/6", puzzle)
+async def get_number_of_guesses(puzzle) -> str or None:
+    x = re.search("([1-6]|X)/6", puzzle)
     if x is None:
-        return -1
+        return None
 
     return puzzle[x.start():x.start()+1]
 
 
 async def get_lines(puzzle) -> list or None:
     x = re.search("([🟩🟨⬛⬜]+\n*)+", puzzle)
+    
     if x is None:
         return None
 
@@ -150,17 +150,20 @@ async def is_from_yesterday(puzzle):
 
     return yesterday == contender
 
+
 async def is_valid_puzzle(contender):
     square_count = await count_green(contender) + await count_yellow(contender) + await count_blank(contender)
-    square_modulo = square_count % 5
     total_guesses = await get_number_of_guesses(contender)
     line_count = await count_lines(contender)
     is_yesterday = await is_from_yesterday(contender)
+    
+    # Either #/6 or 🟩🟨⬛⬜ is missing from the contender
+    if total_guesses is None or line_count is None:
+        return False
 
     return (square_count > 0
-            and square_modulo == 0
-            and total_guesses != -1
-            and line_count == total_guesses
+            and square_count % 5 == 0
+            and (total_guesses == "X" or total_guesses == str(line_count))
             and is_yesterday)
 
 
@@ -242,7 +245,7 @@ async def summarize_month():
 async def wordle_loop():
     await bot.wait_until_ready()
 
-    # Get all the messages from the Wordle channel in the past two days
+    # Collect all the messages from the Wordle channel in the past two days
     channel = bot.get_channel(wordle_channel_id)
     messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=2)).flatten()
 
@@ -263,6 +266,7 @@ async def wordle_loop():
     output = await generate_daily_message(fastest_solve, most_volatile, most_help)
     await channel.send(output)
 
+    # Generate a summary of the previous month if it's the 1st of the month
     if datetime.date.today().day == 1:
         user_stats = await summarize_month()
         monthly_output = await generate_monthly_message(user_stats)
