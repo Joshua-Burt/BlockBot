@@ -220,22 +220,35 @@ async def play_queue():
 async def play_sound(sound_dict):
     path = sound_dict["path"]
     if not exists(path):
-        return
-
+        await log(f"Audio file not found: {path}")
+        return None
+    
     voice_channel = sound_dict["channel"]
     if not voice_channel:
-        return
-
-    # Prevents an error where the bot is sometimes still in a voice channel
+        await log("No voice channel provided.")
+        return None
+    
     for x in bot.voice_clients:
         if x.guild == sound_dict["member"].guild:
             await x.disconnect()
+            await asyncio.sleep(1)
             break
-
-    voice = await sound_dict["channel"].connect()
-
+    
+    try:
+        voice = await voice_channel.connect()
+    except discord.ClientException as e:
+        await log(f"Voice connect failed: {e}")
+        return None
+    
+    if not voice or not voice.is_connected():
+        await log("Voice client not connected before playing audio.")
+        return None
+  
     # Stay in this channel as long as the next sound is in the same channel
     while True:
+        if not voice.is_connected():
+            await log("Voice client not connected before playing audio.")
+            return
         audio_length = MP3(path).info.length
         voice.play(discord.FFmpegPCMAudio(source=path, options="-loglevel panic"))
 
