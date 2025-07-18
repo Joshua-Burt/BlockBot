@@ -1,2 +1,6 @@
-cd src
-python main.py
+#!/bin/bash
+
+SCRIPT_DIR=$(dirname "$0")
+
+cd "${SCRIPT_DIR}"/src || exit
+python -u main.py
