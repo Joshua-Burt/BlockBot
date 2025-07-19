@@ -77,7 +77,7 @@ async def button(ctx, title, option1, option2,
 
     # No options given
     if option1 == "" or option2 == "":
-        await ctx.respond("You must provide at least two options", ephemeral=True)
+        await ctx.respond("You must provide at least two options")
         return
 
     # 4 options given
