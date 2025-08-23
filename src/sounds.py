@@ -172,7 +172,7 @@ async def dramatic_exit_kick(author):
     await author.move_to(None)
 
 
-@bot.slash_command(name="test_intro", description="Upload an .mp3 file to change someone else's intro")
+@bot.slash_command(name="test_intro", description="Play someone else's intro")
 async def test_intro(ctx: discord.ApplicationContext, username):
     if not ctx.author.guild_permissions.administrator:
         await ctx.respond("You must have the administrator permission to play other members' intros", ephemeral=True)
@@ -184,8 +184,7 @@ async def test_intro(ctx: discord.ApplicationContext, username):
 
         # Intercepts an exception when a user does not provide a snowflake.
         except discord.errors.HTTPException:
-            await ctx.respond("Please include the '@' at the start of the name of the user's name",
-                              ephemeral=True)
+            await ctx.respond("Please include the '@' at the start of the name of the user's name", ephemeral=True)
         else:
             filename = await get_user_field(user.id, 'file_name')
             file_path = Path("../sounds/intros/" + filename)
@@ -203,7 +202,10 @@ async def play_queue():
 
     while len(sound_queue) > 0:
         sound_dict = sound_queue.pop(0)
-        voice = await play_sound(sound_dict)
+        voice: discord.VoiceClient = await play_sound(sound_dict)
+        
+        if voice is None:
+            continue
 
         # Disconnect from the voice channel is there are no more sounds to play
         if len(sound_queue) == 0:
@@ -223,21 +225,22 @@ async def play_sound(sound_dict):
         await log(f"Audio file not found: {path}")
         return None
     
-    voice_channel = sound_dict["channel"]
+    voice_channel: discord.VoiceChannel = sound_dict["channel"]
     if not voice_channel:
         await log("No voice channel provided.")
-        return None
+        return
     
     for x in bot.voice_clients:
         if x.guild == sound_dict["member"].guild:
-            await x.disconnect()
+            await x.disconnect(force=True)
             await asyncio.sleep(1)
             break
     
     try:
-        voice = await voice_channel.connect()
+        voice: discord.VoiceClient = await voice_channel.connect()
     except discord.ClientException as e:
         await log(f"Voice connect failed: {e}")
+        print(bot.voice_clients)
         return None
     
     if not voice or not voice.is_connected():
