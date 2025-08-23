@@ -240,7 +240,6 @@ async def play_sound(sound_dict):
         voice: discord.VoiceClient = await voice_channel.connect()
     except discord.ClientException as e:
         await log(f"Voice connect failed: {e}")
-        print(bot.voice_clients)
         return None
     
     if not voice or not voice.is_connected():
