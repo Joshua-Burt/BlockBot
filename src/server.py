@@ -60,7 +60,6 @@ async def server_command(ctx, command):
         await ctx.respond(error_messages.get(str(verify_server_path_rc)), ephemeral=True)
         return
 
-    global process
     if process is None:
         await ctx.respond("The server is not running", ephemeral=True)
     else:
