@@ -1,16 +1,14 @@
 import asyncio
 import platform
 import signal
-
 import discord
 from colorama import Fore
 
-import initialize
 # Local Files
 import json_utils
 import gamble
 import wordle
-import atexit
+import initialize
 
 from log import log, log_error
 from bot import bot
@@ -255,6 +253,8 @@ async def close_connection():
     await log("Connections closed successfully.")
 
 
+async def on_disconnect():
+    await close_connection()
 
 def main():
     config = initialize.get_config()
