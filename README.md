@@ -9,7 +9,7 @@
   - Create polls to get opinions from members
 
 - Controlling a Minecraft server
-  - Users can start and stop a server hosted on the same machine
+  - Users can start and stop a server hosted on the same machine as the bot
   
 - Points system
   - Betting with adjustable odds
@@ -34,8 +34,9 @@ The intros are a great success in my experience, as it as a personal touch to ev
 
 The file structure can be found in the docs folder, along with any important info regarding using the bot.
 
+Python >= 3.10 is required for Py-Cord >= v2.7.0.
 
 ## Notes
-This bot is not without fault. The server portion is mostly reliable, however it is possible to cause data-loss/corruption to the server rarely. It is recommended to make regular backups of any World files you have
+This bot is not without fault. The server portion is mostly reliable, however it is possible to cause data-loss/corruption to the Minecraft server rarely. It is recommended to make regular backups of any World files you have
 
 This project is mainly used for myself, so it can change frequently and without warning. Feel free to contribute regardless.

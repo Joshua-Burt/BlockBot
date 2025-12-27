@@ -29,7 +29,7 @@ async def get_most_volatile(puzzles):
     volatility_indices = []
     for puzzle in puzzles:
         volatility = await get_volatile_index(puzzle.get("puzzle"))
-        volatility_indices.append({'volatility': volatility ,'user': puzzle.get("user").name})
+        volatility_indices.append({'volatility': volatility,'user': puzzle.get("user").name})
 
     # Find the most volatile
     vol = [result["volatility"] for result in volatility_indices]
@@ -45,7 +45,7 @@ async def get_most_helped(puzzles):
     help_indices = []
     for puzzle in puzzles:
         help_index = await get_help_index(puzzle.get("puzzle"))
-        help_indices.append({'help': help_index , 'user': puzzle.get("user").name})
+        help_indices.append({'help': help_index, 'user': puzzle.get("user").name})
 
     # Find the most volatile
     hel = [result["help"] for result in help_indices]
@@ -138,7 +138,7 @@ async def get_puzzle_number(puzzle):
 
 async def get_yesterdays_puzzle_number():
     # First puzzle was June 20, 2021
-    first_day = datetime.date(2021, 6,20)
+    first_day = datetime.date(2021, 6, 20)
     today_day = datetime.date.today()
 
     return (today_day - first_day).days.__str__()
@@ -241,7 +241,7 @@ async def summarize_month():
     return user_stats
 
 
-@tasks.loop(time=datetime.time(10,30,0), reconnect=True)
+@tasks.loop(time=datetime.time(7, 30, 0, tzinfo=datetime.datetime.now().astimezone().tzinfo), reconnect=True)
 async def wordle_loop():
     await bot.wait_until_ready()
 
