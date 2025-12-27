@@ -230,6 +230,7 @@ async def play_sound(sound_dict):
         await log("No voice channel provided.")
         return
     
+    # Leave any connected voice channels within the same guild
     for x in bot.voice_clients:
         if x.guild == sound_dict["member"].guild:
             await x.disconnect(force=True)
@@ -242,21 +243,17 @@ async def play_sound(sound_dict):
         await log(f"Voice connect failed: {e}")
         return None
     
-    if not voice or not voice.is_connected():
-        await log("Voice client not connected before playing audio.")
-        return None
-  
+    
     # Stay in this channel as long as the next sound is in the same channel
     while True:
-        if not voice.is_connected():
+        if not voice or not voice.is_connected():
             await log("Voice client not connected before playing audio.")
             return
+    
         audio_length = MP3(path).info.length
         voice.play(discord.FFmpegPCMAudio(source=path, options="-loglevel panic"))
 
-        voice.pause()
         await asyncio.sleep(0.5)
-        voice.resume()
 
         if sound_dict["path"] == "../sounds/slam.mp3":
             await dramatic_exit_kick(sound_dict["member"])

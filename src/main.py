@@ -253,9 +253,6 @@ async def close_connection():
     await log("Connections closed successfully.")
 
 
-async def on_disconnect():
-    await close_connection()
-
 def main():
     config = initialize.get_config()
     bot.run(config["token"])
