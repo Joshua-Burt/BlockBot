@@ -241,7 +241,7 @@ async def summarize_month():
     return user_stats
 
 
-@tasks.loop(time=datetime.time(10, 30, 0), reconnect=True)
+@tasks.loop(time=datetime.time(7, 30, 0, tzinfo=datetime.datetime.now().astimezone().tzinfo), reconnect=True)
 async def wordle_loop():
     await bot.wait_until_ready()
 
