@@ -6,12 +6,8 @@ from log import log, log_error
 from bot import create_bot
 
 async def main_async():
-    create_bot()
+    bot = create_bot()
     
-    # Import initialize now that the bot has been created
-    import initialize
-    config = initialize.get_config()
-
     loop = asyncio.get_running_loop()
     stop = asyncio.Event()
     
@@ -22,6 +18,10 @@ async def main_async():
     loop.add_signal_handler(signal.SIGINT, handle_signal)
     
     # Start bot
+    # Import initialize now that the bot has been created
+    import initialize
+    
+    config = initialize.get_config()
     task = asyncio.create_task(bot.start(config["token"]))
     
     # Wait for SIGTERM / SIGINT
