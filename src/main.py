@@ -1,20 +1,16 @@
 import asyncio
 import contextlib
 import signal
-
-# Local Files
-import json_utils
-import gamble
-import wordle
-import initialize
+import json
 
 from log import log, log_error
-from bot import bot,create_bot
-
+from bot import create_bot
 
 async def main_async():
-    global bot
-    bot = create_bot()
+    create_bot()
+    
+    # Import initialize now that the bot has been created
+    import initialize
     config = initialize.get_config()
 
     loop = asyncio.get_running_loop()
