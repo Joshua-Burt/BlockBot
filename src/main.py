@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import signal
-import json
 
 from log import log, log_error
 from bot import create_bot
