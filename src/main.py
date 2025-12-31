@@ -1,5 +1,5 @@
 import asyncio
-import platform
+import contextlib
 import signal
 import discord
 from colorama import Fore
@@ -21,32 +21,8 @@ async def on_ready():
     print("---------------------------------")
 
     await initialize.init_all()
-
-    bot.loop.create_task(start_points_loop())
-    bot.loop.create_task(start_wordle_loop())
-
-    shutdown_event = asyncio.Event()
-
-    def handle_signal(signame):
-        print(f"Received {signame}, shutting down...")
-        shutdown_event.set()
-
-    loop = asyncio.get_running_loop()
-
-    if platform.system() == "Windows":
-        # Use signal.signal on Windows
-        signal.signal(signal.SIGINT, lambda s, f: handle_signal("SIGINT"))
-        signal.signal(signal.SIGTERM, lambda s, f: handle_signal("SIGTERM"))
-    else:
-        for signame in {"SIGINT", "SIGTERM"}:
-            loop.add_signal_handler(getattr(signal, signame), lambda s=signame: handle_signal(s))
-
-    try:
-        await shutdown_event.wait()
-    finally:
-        await log("Closing bot...")
-        await close_connection()
-        await loop.shutdown_asyncgens()
+    await start_points_loop()
+    await start_wordle_loop()
 
 
 @bot.event
@@ -171,16 +147,6 @@ async def start_wordle_loop():
     if not wordle.wordle_loop.is_running():
         wordle.wordle_loop.start()
 
-async def stop_wordle_loop():
-    if wordle.wordle_loop.is_running():
-        wordle.wordle_loop.stop()
-
-
-async def stop_points_loop():
-    if gamble.points_loop.is_running():
-        gamble.points_loop.stop()
-
-
 async def start_points_loop():
     guilds = bot.guilds
     voice_channels = []
@@ -245,21 +211,39 @@ class Error(Exception):
     def __init__(self, message):
         super().__init__(Fore.RED + message)
 
-async def close_connection():
+
+async def main():
+    config = initialize.get_config()
+
+    loop = asyncio.get_running_loop()
+    stop = asyncio.Event()
+    
+    def handle_signal():
+        stop.set()
+    
+    loop.add_signal_handler(signal.SIGTERM, handle_signal)
+    loop.add_signal_handler(signal.SIGINT, handle_signal)
+    
+    # Start bot
+    task = asyncio.create_task(bot.start(config["token"]))
+    
+    # Wait for SIGTERM / SIGINT
+    await stop.wait()
+    
+    # Cancel the bot.start task
     await log("Attempting to close connections...")
-    await stop_points_loop()
-    await stop_wordle_loop()
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+    
+    # Ensure HTTP session cleanup
     await bot.close()
     await log("Connections closed successfully.")
 
 
-def main():
-    config = initialize.get_config()
-    bot.run(config["token"])
-
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except KeyboardInterrupt:
         print("KeyboardInterrupt caught in __main__.")

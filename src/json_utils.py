@@ -212,12 +212,15 @@ async def get_random_response(saying_id):
 
 async def get_user_from_id(user_id: str):
     """
-        :param user_id: name of sound to be played
-        :returns: price to play the sound with the name
-        :rtype: discord.Member or None
-        """
+    :param user_id: ID of the requested user.
+    :returns: User with the corresponding ID.
+    :rtype: discord.Member or None
+    """
+    
+    # Attempt to find the user in cache
     name = bot.get_user(user_id)
 
+    # Attempt to find the user with an API call
     if name is None:
         try:
             name = await bot.fetch_user(user_id)
