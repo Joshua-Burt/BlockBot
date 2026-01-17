@@ -204,7 +204,7 @@ async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, stre
     if streak_dicts is not None and len(streak_dicts) > 0:
         message += "\n\n**Streaks:**"
         for streak_dict in sorted(streak_dicts, key=lambda x: x['days'], reverse=True):
-            message += f"\n> { streak_dict['name'] }: { streak_dict['days'] } days"
+            message += f"\n> { streak_dict['name'] }: { streak_dict['days'] } {'days' if streak_dict['days'] > 1 else 'day'}"
 
     return message
 
