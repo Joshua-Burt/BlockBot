@@ -82,16 +82,14 @@ async def get_volatile_index(puzzle):
 def get_streaks(daily_message, playing_users):
     lines_with_days = re.findall(".*[0-9]+ days", daily_message)
     streak_holders_dicts = []
-    #previous_streak_holders = []
     
     # Collect the users who had a streak yesterday
     for line in lines_with_days:
         name = re.search("(?<=> ).*(?=:)", line)
         days = re.search("(?<=: )[0-9]+(?= days)", line)
         streak_holders_dicts.append({"name": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
-        #previous_streak_holders.append(line[name.start():name.end()])
     
-    for username in list(set(playing_users) - set(name for name in streak_holders_dicts['name'])):
+    for username in list(set(playing_users) - set(name['name'] for name in streak_holders_dicts)):
         streak_holders_dicts.append({"name": username, "days": 1})
     
     return streak_holders_dicts
