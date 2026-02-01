@@ -5,7 +5,6 @@ from colorama import Fore
 
 
 # Local files
-import main_commands
 import roll
 import poll
 import gamble
