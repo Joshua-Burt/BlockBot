@@ -78,6 +78,28 @@ async def get_volatile_index(puzzle):
 
     return max(outliers)
 
+
+async def get_streaks(daily_message, playing_users):
+    lines_with_days = re.findall(".*[0-9]+ day", daily_message)
+    streak_holders_dicts = []
+    
+    # Collect the users who had a streak yesterday
+    for line in lines_with_days:
+        name = re.search("(?<=> ).*(?=:)", line)
+        days = re.search("(?<=: )[0-9]+(?= day)", line)
+        
+        if name is None or days is None:
+            continue
+        
+        streak_holders_dicts.append({"name": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
+    
+    # Add new 1-day streak holders
+    for username in list(set(playing_users) - set(name['name'] for name in streak_holders_dicts)):
+        streak_holders_dicts.append({"name": username, "days": 1})
+    
+    return streak_holders_dicts
+
+
 async def get_help_index(puzzle):
     return await count_yellow(puzzle)
 
@@ -167,7 +189,7 @@ async def is_valid_puzzle(contender):
             and is_yesterday)
 
 
-async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts):
+async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, streak_dicts):
     message = f"**Results of Yesterday's Wordle ({int(await get_yesterdays_puzzle_number()):,d}):**"
 
     if speed_dicts is not None:
@@ -181,6 +203,11 @@ async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts):
     if help_dicts is not None:
         for i in range(len(help_dicts)):
             message += f"\n> Required Most Help{' ' + str(i + 1) + '/' + str(len(help_dicts)) if len(help_dicts) > 1 else ''}: {help_dicts[i]['user']} with {help_dicts[i]['help']} 🟨"
+
+    if streak_dicts is not None and len(streak_dicts) > 0:
+        message += "\n\n**Streaks:**"
+        for streak_dict in sorted(streak_dicts, key=lambda x: x['days'], reverse=True):
+            message += f"\n> { streak_dict['name'] }: { streak_dict['days'] } {'days' if streak_dict['days'] > 1 else 'day'}"
 
     return message
 
@@ -197,9 +224,9 @@ async def generate_monthly_message(stats):
 
 
 async def collect_stats(results):
-    fastest_names = re.findall("(?:(?<=Fastest \d/\d: )|(?<=Fastest: ))[a-z0-9_.]+", results)
-    most_help_names = re.findall("(?:(?<=Required Most Help \d/\d: )|(?<=Required Most Help: ))[a-z0-9_.]+", results)
-    most_volatile_names = re.findall("(?:(?<=Most Volatile \d/\d: )|(?<=Most Volatile: ))[a-z0-9_.]+", results)
+    fastest_names = re.findall("(?:(?<=Fastest \\d/\\d: )|(?<=Fastest: ))[a-z0-9_.]+", results)
+    most_help_names = re.findall("(?:(?<=Required Most Help \\d/\\d: )|(?<=Required Most Help: ))[a-z0-9_.]+", results)
+    most_volatile_names = re.findall("(?:(?<=Most Volatile \\d/\\d: )|(?<=Most Volatile: ))[a-z0-9_.]+", results)
 
     return {'fastest_names': fastest_names, 'most_help_names': most_help_names, 'most_volatile_names': most_volatile_names}
 
@@ -250,10 +277,14 @@ async def wordle_loop():
     messages = await channel.history(after=datetime.datetime.now() - datetime.timedelta(days=2)).flatten()
 
     puzzles = []
-
+    bot_messages = []
+    
+    # Collect all yesterday's puzzles and bot messages
     for message in messages:
         if await is_valid_puzzle(message.content):
             puzzles.append({'user': message.author, 'puzzle': message.content})
+        elif message.author == bot.user and "Results of Yesterday's Wordle" in message.content:
+            bot_messages.append(message.content)
 
     # Exit if no Wordle messages were submitted
     if len(puzzles) == 0:
@@ -262,8 +293,13 @@ async def wordle_loop():
     fastest_solve = await get_quickest(puzzles)
     most_volatile = await get_most_volatile(puzzles)
     most_help = await get_most_helped(puzzles)
+    streaks = []
+    
+    if len(bot_messages) != 0:
+        # Only check the most recent message and pass the users participating
+        streaks = await get_streaks(bot_messages.pop(), list(set([puzzle['user'] for puzzle in puzzles])))
 
-    output = await generate_daily_message(fastest_solve, most_volatile, most_help)
+    output = await generate_daily_message(fastest_solve, most_volatile, most_help, streaks)
     await channel.send(output)
 
     # Generate a summary of the previous month if it's the 1st of the month

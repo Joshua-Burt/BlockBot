@@ -68,7 +68,7 @@ async def prepare_roll(raw_roll):
     if d_pos != -1 and len(raw_roll) > d_pos + 1:
         # Checking if there are multiple rolls by seeing if the first character is a digit or not
         if raw_roll[0].isdigit():
-            num_of_rolls = int(regex.match('\d+(?=d)', raw_roll)[0])
+            num_of_rolls = int(regex.match('\\d+(?=d)', raw_roll)[0])
         elif raw_roll[0] == "d":
             num_of_rolls = 1
         else:
@@ -77,15 +77,15 @@ async def prepare_roll(raw_roll):
         return False
 
     # Finds the maximum number that comes before + or -
-    faces = int(regex.findall('(?<=d)\d+(?=$|\D)', raw_roll)[0])
+    faces = int(regex.findall('(?<=d)\\d+(?=$|\\D)', raw_roll)[0])
 
     matches = ['+', '-']
 
     if any(x in raw_roll for x in matches):
         # Finds the operation, either + or -
-        operation = regex.findall('\W', raw_roll)[0]
+        operation = regex.findall('\\W', raw_roll)[0]
         # Finds the modifier that comes after + or -
-        modifier = int(regex.findall('(?<=\W)\d+', raw_roll)[0])
+        modifier = int(regex.findall('(?<=\\W)\\d+', raw_roll)[0])
     else:
         # Sets the operator and modifier to +0, as there was no specified modifier
         operation = "+"
