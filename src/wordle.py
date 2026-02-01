@@ -91,11 +91,11 @@ async def get_streaks(daily_message, playing_users):
         if name is None or days is None:
             continue
         
-        streak_holders_dicts.append({"name": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
+        streak_holders_dicts.append({"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
     
     # Add new 1-day streak holders
-    for username in list(set(playing_users) - set(name['name'] for name in streak_holders_dicts)):
-        streak_holders_dicts.append({"name": username, "days": 1})
+    for username in list(set(playing_users) - set(streak_dict['user'].name for streak_dict in streak_holders_dicts)):
+        streak_holders_dicts.append({"user": username, "days": 1})
     
     return streak_holders_dicts
 
@@ -207,7 +207,7 @@ async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, stre
     if streak_dicts is not None and len(streak_dicts) > 0:
         message += "\n\n**Streaks:**"
         for streak_dict in sorted(streak_dicts, key=lambda x: x['days'], reverse=True):
-            message += f"\n> { streak_dict['name'] }: { streak_dict['days'] } {'days' if streak_dict['days'] > 1 else 'day'}"
+            message += f"\n> { streak_dict['user'] }: { streak_dict['days'] } {'days' if streak_dict['days'] > 1 else 'day'}"
 
     return message
 
