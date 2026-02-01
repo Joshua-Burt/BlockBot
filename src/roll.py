@@ -29,7 +29,7 @@ async def roll(ctx, number_of_dice, number_of_faces, modifier):
         roll_str = f"{number_of_dice}d{number_of_faces} - {abs(int(modifier))}"
 
     result = await roll_using_notation(roll_str)
-    ctx.respond(f"> {roll_str} = {str(result)}")
+    await ctx.respond(f"> {roll_str} = {str(result)}")
 
 
 async def roll_using_notation(raw_roll):
