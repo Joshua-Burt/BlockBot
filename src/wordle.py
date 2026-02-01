@@ -87,6 +87,10 @@ async def get_streaks(daily_message, playing_users):
     for line in lines_with_days:
         name = re.search("(?<=> ).*(?=:)", line)
         days = re.search("(?<=: )[0-9]+(?= day)", line)
+        
+        if name is None or days is None:
+            continue
+        
         streak_holders_dicts.append({"name": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
     
     # Add new 1-day streak holders
@@ -275,7 +279,7 @@ async def wordle_loop():
     puzzles = []
     bot_messages = []
     
-    # Collect all puzzles and bot messages
+    # Collect all yesterday's puzzles and bot messages
     for message in messages:
         if await is_valid_puzzle(message.content):
             puzzles.append({'user': message.author, 'puzzle': message.content})
