@@ -94,7 +94,7 @@ async def get_streaks(daily_message, playing_users):
         streak_holders_dicts.append({"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
     
     # Add new 1-day streak holders
-    for username in list(set(playing_users) - set(streak_dict['user'].name for streak_dict in streak_holders_dicts)):
+    for username in list(set(playing_users) - set(streak_dict['user'] for streak_dict in streak_holders_dicts)):
         streak_holders_dicts.append({"user": username, "days": 1})
     
     return streak_holders_dicts
@@ -297,7 +297,7 @@ async def wordle_loop():
     
     if len(bot_messages) != 0:
         # Only check the most recent message and pass the users participating
-        streaks = await get_streaks(bot_messages.pop(), list(set([puzzle['user'] for puzzle in puzzles])))
+        streaks = await get_streaks(bot_messages.pop(), list(set([puzzle['user'].name for puzzle in puzzles])))
 
     output = await generate_daily_message(fastest_solve, most_volatile, most_help, streaks)
     await channel.send(output)
