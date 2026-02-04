@@ -79,19 +79,28 @@ async def get_volatile_index(puzzle):
     return max(outliers)
 
 
-async def get_streaks(daily_message, playing_users):
-    lines_with_days = re.findall(".*[0-9]+ day", daily_message)
+async def get_streaks(daily_messages, playing_users):
     streak_holders_dicts = []
     
-    # Collect the users who had a streak yesterday
-    for line in lines_with_days:
-        name = re.search("(?<=> ).*(?=:)", line)
-        days = re.search("(?<=: )[0-9]+(?= day)", line)
+    # Only check if there are multi-day streaks if there was a previous daily message from the bot
+    if len(daily_messages) > 0:
+        daily_message = daily_messages.pop()
+        lines_with_days = re.findall(".*[0-9]+ day", daily_message)
         
-        if name is None or days is None:
-            continue
-        
-        streak_holders_dicts.append({"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
+        # Collect the users who had a streak yesterday
+        for line in lines_with_days:
+            name = re.search("(?<=> ).*(?=:)", line)
+            days = re.search("(?<=: )[0-9]+(?= day)", line)
+            
+            # Skip this loop when there is no streaks already existing
+            if name is None or days is None:
+                continue
+              
+            # Skip this loop if the user didn't play yesterday
+            if line[name.start():name.end()] not in playing_users:
+                continue
+            
+            streak_holders_dicts.append({"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
     
     # Add new 1-day streak holders
     for username in list(set(playing_users) - set(streak_dict['user'] for streak_dict in streak_holders_dicts)):
@@ -293,11 +302,9 @@ async def wordle_loop():
     fastest_solve = await get_quickest(puzzles)
     most_volatile = await get_most_volatile(puzzles)
     most_help = await get_most_helped(puzzles)
-    streaks = []
     
-    if len(bot_messages) != 0:
-        # Only check the most recent message and pass the users participating
-        streaks = await get_streaks(bot_messages.pop(), list(set([puzzle['user'].name for puzzle in puzzles])))
+    # Pass in the names of the users that participated in yesterday's wordle
+    streaks = await get_streaks(bot_messages, list(set([puzzle['user'].name for puzzle in puzzles])))
 
     output = await generate_daily_message(fastest_solve, most_volatile, most_help, streaks)
     await channel.send(output)
