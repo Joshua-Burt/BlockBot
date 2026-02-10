@@ -243,8 +243,8 @@ async def collect_stats(results):
 
 async def count_stats(stats):
     fastest_count = dict(zip(Counter(stats['fastest_names']).keys(), Counter(stats['fastest_names']).values()))
-    help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['fastest_names']).values()))
-    volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['fastest_names']).values()))
+    help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['most_help_names']).values()))
+    volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['most_volatile_names']).values()))
 
     return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count}
 
