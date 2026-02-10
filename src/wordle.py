@@ -226,7 +226,8 @@ async def generate_monthly_message(stats):
 
     for key, value in stats.items():
         message += f"\n\n**{key.title().replace('_', ' ')}**"
-        for sub_key, sub_value in value.items():
+        
+        for sub_key, sub_value in sorted(value.items(), key=lambda x: int(x[1]), reverse=True):
             message += f"\n> {sub_key}: {sub_value}"
 
     return message
