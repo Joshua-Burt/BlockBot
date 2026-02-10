@@ -226,7 +226,8 @@ async def generate_monthly_message(stats):
 
     for key, value in stats.items():
         message += f"\n\n**{key.title().replace('_', ' ')}**"
-        for sub_key, sub_value in value.items():
+        
+        for sub_key, sub_value in sorted(value.items(), key=lambda x: int(x[1]), reverse=True):
             message += f"\n> {sub_key}: {sub_value}"
 
     return message
@@ -242,8 +243,8 @@ async def collect_stats(results):
 
 async def count_stats(stats):
     fastest_count = dict(zip(Counter(stats['fastest_names']).keys(), Counter(stats['fastest_names']).values()))
-    help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['fastest_names']).values()))
-    volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['fastest_names']).values()))
+    help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['most_help_names']).values()))
+    volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['most_volatile_names']).values()))
 
     return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count}
 
