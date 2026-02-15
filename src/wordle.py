@@ -61,7 +61,7 @@ async def get_most_helped(puzzles):
 async def get_oneshots(puzzles):
     oneshot_list = []
     for puzzle in puzzles:
-        if await get_number_of_guesses(puzzle) != "1":
+        if await get_number_of_guesses(puzzle.get("puzzle")) != "1":
             continue
             
         oneshot_list.append({'user': puzzle.get("user").name})
