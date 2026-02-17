@@ -58,6 +58,48 @@ async def get_most_helped(puzzles):
     return [p for p in help_indices if p.get("help") == most_help]
 
 
+async def get_oneshots(puzzles):
+    oneshot_list = []
+    for puzzle in puzzles:
+        if await get_number_of_guesses(puzzle.get("puzzle")) != "1":
+            continue
+            
+        oneshot_list.append({'user': puzzle.get("user").name})
+    
+    return oneshot_list
+      
+
+
+async def get_streaks(daily_messages, playing_users):
+    streak_holders_dicts = []
+    
+    # Only check if there are multi-day streaks if there was a previous daily message from the bot
+    if len(daily_messages) > 0:
+        daily_message = daily_messages.pop()
+        lines_with_days = re.findall(".*[0-9]+ day", daily_message)
+        
+        # Collect the users who had a streak yesterday
+        for line in lines_with_days:
+            name = re.search("(?<=> ).*(?=:)", line)
+            days = re.search("(?<=: )[0-9]+(?= day)", line)
+            
+            # Skip this loop when there is no streaks already existing
+            if name is None or days is None:
+                continue
+            
+            # Skip this loop if the user didn't play yesterday
+            if line[name.start():name.end()] not in playing_users:
+                continue
+            
+            streak_holders_dicts.append(
+                {"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
+    
+    # Add new 1-day streak holders
+    for username in list(set(playing_users) - set(streak_dict['user'] for streak_dict in streak_holders_dicts)):
+        streak_holders_dicts.append({"user": username, "days": 1})
+    
+    return streak_holders_dicts
+
 # Returns [0] if there is no extreme outliers (changes of <= -2 or >= 4)
 async def get_volatile_index(puzzle):
     lines = await get_lines(puzzle)
@@ -77,36 +119,6 @@ async def get_volatile_index(puzzle):
             outliers.append(abs(line_2_count - line_1_count))
 
     return max(outliers)
-
-
-async def get_streaks(daily_messages, playing_users):
-    streak_holders_dicts = []
-    
-    # Only check if there are multi-day streaks if there was a previous daily message from the bot
-    if len(daily_messages) > 0:
-        daily_message = daily_messages.pop()
-        lines_with_days = re.findall(".*[0-9]+ day", daily_message)
-        
-        # Collect the users who had a streak yesterday
-        for line in lines_with_days:
-            name = re.search("(?<=> ).*(?=:)", line)
-            days = re.search("(?<=: )[0-9]+(?= day)", line)
-            
-            # Skip this loop when there is no streaks already existing
-            if name is None or days is None:
-                continue
-              
-            # Skip this loop if the user didn't play yesterday
-            if line[name.start():name.end()] not in playing_users:
-                continue
-            
-            streak_holders_dicts.append({"user": line[name.start():name.end()], "days": int(line[days.start():days.end()]) + 1})
-    
-    # Add new 1-day streak holders
-    for username in list(set(playing_users) - set(streak_dict['user'] for streak_dict in streak_holders_dicts)):
-        streak_holders_dicts.append({"user": username, "days": 1})
-    
-    return streak_holders_dicts
 
 
 async def get_help_index(puzzle):
@@ -198,7 +210,7 @@ async def is_valid_puzzle(contender):
             and is_yesterday)
 
 
-async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, streak_dicts):
+async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, oneshot_dicts, streak_dicts):
     message = f"**Results of Yesterday's Wordle ({int(await get_yesterdays_puzzle_number()):,d}):**"
 
     if speed_dicts is not None:
@@ -212,6 +224,10 @@ async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, stre
     if help_dicts is not None:
         for i in range(len(help_dicts)):
             message += f"\n> Required Most Help{' ' + str(i + 1) + '/' + str(len(help_dicts)) if len(help_dicts) > 1 else ''}: {help_dicts[i]['user']} with {help_dicts[i]['help']} 🟨"
+
+    if oneshot_dicts is not None:
+        for i in range(len(oneshot_dicts)):
+            message += f"\n> One-Shot{' ' + str(i + 1) + '/' + str(len(oneshot_dicts)) if len(oneshot_dicts) > 1 else ''}: {oneshot_dicts[i]['user']}"
 
     if streak_dicts is not None and len(streak_dicts) > 0:
         message += "\n\n**Streaks:**"
@@ -237,16 +253,18 @@ async def collect_stats(results):
     fastest_names = re.findall("(?:(?<=Fastest \\d/\\d: )|(?<=Fastest: ))[a-z0-9_.]+", results)
     most_help_names = re.findall("(?:(?<=Required Most Help \\d/\\d: )|(?<=Required Most Help: ))[a-z0-9_.]+", results)
     most_volatile_names = re.findall("(?:(?<=Most Volatile \\d/\\d: )|(?<=Most Volatile: ))[a-z0-9_.]+", results)
+    oneshot_names = re.findall("(?:(?<=One-Shot \\d/\\d: )|(?<=One-Shot: ))[a-z0-9_.]+", results)
 
-    return {'fastest_names': fastest_names, 'most_help_names': most_help_names, 'most_volatile_names': most_volatile_names}
+    return {'fastest_names': fastest_names, 'most_help_names': most_help_names, 'most_volatile_names': most_volatile_names, 'oneshot_names': oneshot_names}
 
 
 async def count_stats(stats):
     fastest_count = dict(zip(Counter(stats['fastest_names']).keys(), Counter(stats['fastest_names']).values()))
     help_count = dict(zip(Counter(stats['most_help_names']).keys(), Counter(stats['most_help_names']).values()))
     volatile_count = dict(zip(Counter(stats['most_volatile_names']).keys(), Counter(stats['most_volatile_names']).values()))
+    oneshot_count = dict(zip(Counter(stats['oneshot_names']).keys(), Counter(stats['oneshot_names']).values()))
 
-    return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count}
+    return {'fastest_count': fastest_count, 'help_count': help_count, 'volatile_count': volatile_count, 'oneshot_count': oneshot_count}
 
 
 async def summarize_month():
@@ -303,11 +321,12 @@ async def wordle_loop():
     fastest_solve = await get_quickest(puzzles)
     most_volatile = await get_most_volatile(puzzles)
     most_help = await get_most_helped(puzzles)
+    oneshots = await get_oneshots(puzzles)
     
     # Pass in the names of the users that participated in yesterday's wordle
     streaks = await get_streaks(bot_messages, list(set([puzzle['user'].name for puzzle in puzzles])))
 
-    output = await generate_daily_message(fastest_solve, most_volatile, most_help, streaks)
+    output = await generate_daily_message(fastest_solve, most_volatile, most_help, oneshots, streaks)
     await channel.send(output)
 
     # Generate a summary of the previous month if it's the 1st of the month
