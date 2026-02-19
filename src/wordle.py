@@ -2,7 +2,6 @@ import calendar
 import datetime
 import re
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta, date
 import requests
 from discord.ext import tasks
 
@@ -183,8 +182,8 @@ async def get_puzzle_number(puzzle):
 
 async def get_yesterdays_puzzle_number():
     # First puzzle was June 20, 2021
-    first_day = date(2021, 6, 20)
-    today_day = date.today()
+    first_day = datetime.date(2021, 6, 20)
+    today_day = datetime.date.today()
 
     return (today_day - first_day).days.__str__()
 
@@ -197,7 +196,7 @@ async def is_from_yesterday(puzzle):
 
 
 async def get_yesterdays_answer():
-    yesterday = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+    yesterday = (datetime.datetime.now() - datetime.timedelta(1)).strftime('%Y-%m-%d')
     url = f"https://www.nytimes.com/svc/wordle/v2/{yesterday}.json"
     
     # Requires setting Referer to bypass some security measures
