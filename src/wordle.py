@@ -2,7 +2,7 @@ import calendar
 import datetime
 import re
 from collections import Counter, defaultdict
-
+from datetime import datetime, timedelta, date
 import requests
 from discord.ext import tasks
 
@@ -183,8 +183,8 @@ async def get_puzzle_number(puzzle):
 
 async def get_yesterdays_puzzle_number():
     # First puzzle was June 20, 2021
-    first_day = datetime.date(2021, 6, 20)
-    today_day = datetime.date.today()
+    first_day = date(2021, 6, 20)
+    today_day = date.today()
 
     return (today_day - first_day).days.__str__()
 
@@ -196,15 +196,18 @@ async def is_from_yesterday(puzzle):
     return yesterday == contender
 
 
-async def get_yesterdays_word():
-    # Would much prefer to use an official source....
-    response = requests.get("https://wordfinder.yourdictionary.com/wordle/answers/")
-    x = re.search('(?<=index:' + await get_yesterdays_puzzle_number() +',answer:\")\\w+', response.text)
+async def get_yesterdays_answer():
+    yesterday = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+    url = f"https://www.nytimes.com/svc/wordle/v2/{yesterday}.json"
     
-    if x is None:
+    # Requires setting Referer to bypass some security measures
+    headers = {'Referer': 'https://www.nytimes.com/games/wordle/index.html'}
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        return str(response.json()['solution']).upper()
+    else:
         return None
-    
-    return response.text[x.start():x.end()]
 
 async def is_valid_puzzle(contender):
     square_count = await count_green(contender) + await count_yellow(contender) + await count_blank(contender)
@@ -225,9 +228,9 @@ async def is_valid_puzzle(contender):
 async def generate_daily_message(speed_dicts, volatility_dicts, help_dicts, oneshot_dicts, streak_dicts):
     message = f"**Results of Yesterday's Wordle ({int(await get_yesterdays_puzzle_number()):,d}):**"
     
-    yesterdays_word = await get_yesterdays_word()
-    if yesterdays_word is not None:
-        message += "\nYesterday's word was **" + yesterdays_word + "**"
+    yesterdays_answer = await get_yesterdays_answer()
+    if yesterdays_answer is not None:
+        message += "\nYesterday's word was **" + yesterdays_answer + "**"
 
     if speed_dicts is not None:
         for i in range(len(speed_dicts)):
