@@ -252,8 +252,10 @@ async def play_sound(sound_dict):
     
         audio_length = MP3(path).info.length
         voice.play(discord.FFmpegPCMAudio(source=path, options="-loglevel panic"))
-
+        
+        voice.pause()
         await asyncio.sleep(0.5)
+        voice.resume()
 
         if sound_dict["path"] == "../sounds/slam.mp3":
             await dramatic_exit_kick(sound_dict["member"])
