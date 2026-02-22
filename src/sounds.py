@@ -262,7 +262,7 @@ async def play_sound(sound_dict):
         else:
             await asyncio.sleep(audio_length + 2)
 
-        # Break from the loop if there's no sounds
+        # Break from the loop if there are no more sounds
         if len(sound_queue) == 0:
             break
 
