@@ -249,11 +249,12 @@ async def play_sound(sound_dict):
         if not voice or not voice.is_connected():
             await log("Voice client not connected before playing audio.")
             return
-    
+        
+        # This sleep ensures the sound doesn't play too early and overlap the join-call sound.
+        await asyncio.sleep(0.5)
+        
         audio_length = MP3(path).info.length
         voice.play(discord.FFmpegPCMAudio(source=path, options="-loglevel panic"))
-
-        await asyncio.sleep(0.5)
 
         if sound_dict["path"] == "../sounds/slam.mp3":
             await dramatic_exit_kick(sound_dict["member"])
@@ -261,7 +262,7 @@ async def play_sound(sound_dict):
         else:
             await asyncio.sleep(audio_length + 2)
 
-        # Break from the loop if there's no sounds
+        # Break from the loop if there are no more sounds
         if len(sound_queue) == 0:
             break
 
