@@ -122,7 +122,7 @@ async def gamble(ctx: discord.ApplicationContext, wager):
 
         gifted_member_name = await get_user_from_id(gifted_member_id)
 
-        result = f"**{author.display_name}** has gambled **{wager:,}** and has given it to **{gifted_member_name}**."
+        result = f"**{author.display_name}** has gambled **{wager:,}** and has given it to **{gifted_member_name.display_name}**."
 
     # Won the jackpot!
     else:
