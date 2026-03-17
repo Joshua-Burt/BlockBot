@@ -165,19 +165,21 @@ async def add_points(user_id, amount):
 async def points(ctx: discord.ApplicationContext):
     points_list = []
 
-    await ctx.respond("**LOADING :)**\n")
-
     for i, user_id in enumerate(id_list):
         username = await get_user_from_id(user_id)
         user_points = await get_user_field(user_id, "points")
         user_bets = await get_user_field(user_id, "bets")
+        
+        # Ensure no variables are undefined
+        if None in [username, user_points, user_bets]:
+            continue
 
         user_point_info = (username.display_name, user_points, user_bets)
         points_list.append(user_point_info)
 
     points_list = sorted(points_list, key=lambda x:x[1], reverse=True)
 
-    await ctx.edit(content=f"{await points_tuple_to_string(points_list)}")
+    await ctx.respond(await points_tuple_to_string(points_list))
 
 
 async def points_tuple_to_string(user_tuple_list):

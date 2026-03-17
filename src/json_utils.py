@@ -218,12 +218,12 @@ async def get_user_from_id(user_id: str):
     """
     
     # Attempt to find the user in cache
-    name = bot.get_user(user_id)
+    name = bot.get_user(int(user_id))
 
-    # Attempt to find the user with an API call
+    # Attempt to find the user with an API call (slower)
     if name is None:
         try:
-            name = await bot.fetch_user(user_id)
+            name = await bot.fetch_user(int(user_id))
 
         # Intercepts an exception when a user does not provide a snowflake.
         except discord.errors.HTTPException:
